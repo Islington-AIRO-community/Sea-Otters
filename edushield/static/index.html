@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Varosha &middot; Study-abroad claim check</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --ink:#16202c; --ink-2:#4a5768; --ink-3:#78849a;
+    --line:#e2e6ec; --line-2:#eef1f5;
+    --brand:#1d4ed8; --brand-ink:#12306e; --brand-bg:#eef3ff;
+    --ok-bg:#e8f5ee; --ok-ink:#0f6b3d; --ok-line:#bfe3cf;
+    --warn-bg:#fdf4e3; --warn-ink:#855207; --warn-line:#f0dcae;
+    --bad-bg:#fdecea; --bad-ink:#a5221b; --bad-line:#f5c9c5;
+    --info-bg:#eef3ff; --info-ink:#1d4ed8; --info-line:#c9d8fb;
+    --r:10px; --sh:0 1px 2px rgba(22,32,44,.06), 0 1px 3px rgba(22,32,44,.04);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 72px}
+  header{border-bottom:1px solid var(--line);background:var(--panel)}
+  header .wrap{display:flex;align-items:center;gap:14px;padding-top:18px;padding-bottom:18px}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff;
+    display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
+  .logo svg{display:block}
+  .htxt h1{font-size:17px;margin:0;letter-spacing:-.01em}
+  .htxt p{margin:1px 0 0;font-size:13px;color:var(--ink-3)}
+  .pill{margin-left:auto;font-size:12px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);
+    background:#fbfcfd;color:var(--ink-2);white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:99px;background:var(--ink-3);flex:none}
+  .dot.ok{background:#12a150} .dot.no{background:#d1342a}
+  h2{font-size:16px;margin:0 0 10px;letter-spacing:-.01em}
+  h3{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    box-shadow:var(--sh);padding:20px;margin:16px 0}
+  label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:7px}
+  textarea{width:100%;min-height:132px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink);
+    border:1px solid var(--line);border-radius:var(--r);background:#fcfdfe;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+  button{font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:11px 18px;cursor:pointer;
+    border:1px solid transparent;transition:background .12s,border-color .12s}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .primary{background:var(--brand);color:#fff}
+  .primary:hover:not(:disabled){background:#1a45c0}
+  .ghost{background:#fff;border-color:var(--line);color:var(--ink-2)}
+  .ghost:hover:not(:disabled){background:#f7f9fc;border-color:#cfd6e0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row.tight{gap:8px}
+  .hint{font-size:12.5px;color:var(--ink-3);margin:10px 0 0}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font:inherit;font-size:12.5px;background:#fff;border:1px solid var(--line);color:var(--ink-2);
+    padding:6px 11px;border-radius:99px;cursor:pointer}
+  .chip:hover{background:var(--brand-bg);border-color:#c9d8fb;color:var(--brand-ink)}
+
+  /* ---- loading ---- */
+  .load{text-align:center;padding:8px 0 2px}
+  .bar{height:5px;border-radius:99px;background:var(--line-2);overflow:hidden;margin:20px 0 14px}
+  .bar i{display:block;height:100%;width:40%;border-radius:99px;
+    background:linear-gradient(90deg,#93b4f7,var(--brand),#93b4f7);animation:slide 1.15s linear infinite}
+  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+  @media (prefers-reduced-motion:reduce){.bar i{animation:none;width:100%;opacity:.5}}
+  .timer{font-variant-numeric:tabular-nums;font-size:30px;font-weight:650;letter-spacing:-.02em}
+  .agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:7px;margin-top:20px;text-align:left}
+  .ag{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-3);
+    border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#fcfdfe}
+  .ag .tick{width:14px;height:14px;border-radius:99px;border:2px solid var(--line);flex:none}
+  @media (prefers-reduced-motion:no-preference){ .ag.live .tick{border-color:var(--brand);animation:pulse 1.05s ease-in-out infinite} }
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(29,78,216,.32)}50%{box-shadow:0 0 0 5px rgba(29,78,216,0)}}
+  .ag .n{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11.5px}
+
+  /* ---- verdict ---- */
+  .v{border-radius:var(--r);padding:16px 18px;border:1px solid;margin:16px 0;display:flex;gap:14px;align-items:flex-start}
+  .v .ic{width:30px;height:30px;border-radius:99px;display:grid;place-items:center;flex:none;font-size:16px;font-weight:700}
+  .v h2{margin:0 0 3px;font-size:16px}
+  .v p{margin:0;font-size:14px}
+  .v.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)}
+  .v.ok .ic{background:#cbe9d8}
+  .v.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn-ink)}
+  .v.warn .ic{background:#f7e6bd}
+  .v.bad{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad-ink)}
+  .v.bad .ic{background:#f7ccc8}
+  .v.info{background:var(--info-bg);border-color:var(--info-line);color:var(--brand-ink)}
+  .v.info .ic{background:#d3e0fd}
+
+  .tag{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:99px;
+    border:1px solid var(--line);background:#fff;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em}
+  .tag.vh{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok-ink)}
+  .tag.vc{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn-ink)}
+  .tag.vb{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad-ink)}
+  .tag.vi{background:var(--info-bg);border-color:var(--info-line);color:var(--brand-ink)}
+
+  ul.clean{margin:0;padding:0;list-style:none}
+  ul.clean li{position:relative;padding-left:19px;margin-bottom:9px;font-size:14.5px}
+  ul.clean li:last-child{margin-bottom:0}
+  ul.clean li::before{content:"";position:absolute;left:3px;top:8px;width:6px;height:6px;border-radius:99px;background:var(--ink-3)}
+  a{color:var(--brand);text-decoration:none;overflow-wrap:anywhere}
+  a:hover{text-decoration:underline}
+  .src{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+
+  .kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:7px 16px;font-size:14px}
+  .kv dt{color:var(--ink-3);font-size:13px}
+  .kv dd{margin:0}
+
+  .tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);
+    font-weight:600;padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
+  .tbl td{padding:11px 10px 11px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+  .tbl tr:last-child td{border-bottom:0}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;color:var(--ink-2)}
+
+  details{border-top:1px solid var(--line-2);padding:11px 0}
+  details:last-of-type{border-bottom:1px solid var(--line-2)}
+  summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;gap:9px}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"\203A";color:var(--ink-3);font-size:19px;line-height:1;transition:transform .15s;display:inline-block}
+  details[open] summary::before{transform:rotate(90deg)}
+  summary .tag{margin-left:auto;font-weight:600}
+  .dbody{padding:13px 0 4px 19px}
+  .note{font-size:13px;color:var(--ink-2);background:#fbfcfd;border:1px solid var(--line);
+    border-left:3px solid var(--line);border-radius:6px;padding:11px 13px;margin:12px 0 0}
+  .err{background:var(--bad-bg);border:1px solid var(--bad-line);color:var(--bad-ink);
+    border-radius:8px;padding:12px 14px;font-size:14px;margin:14px 0}
+  .sc{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:9px;margin:4px 0 14px}
+  .sc label{display:flex;gap:9px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);
+    border-radius:8px;cursor:pointer;background:#fcfdfe;margin:0;font-size:13.5px;font-weight:500;color:var(--ink-2)}
+  .sc label:hover{background:#f7f9fc}
+  .sc input{margin:2px 0 0;accent-color:var(--brand);flex:none}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid #ffffff66;border-top-color:#fff;
+    border-radius:99px;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  footer{text-align:center;font-size:12.5px;color:var(--ink-3);padding:26px 20px}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="M9 12l2 2 4-4"></path>
+      </svg>
+    </div>
+    <div class="htxt">
+      <h1>Varosha</h1>
+      <p>Check a university, consultancy or scholarship claim before you pay anyone</p>
+    </div>
+    <div class="pill"><span class="dot" id="dot"></span><span id="hstat">checking&hellip;</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ STEP 1 : INPUT ============ -->
+  <section id="s-input">
+    <div class="card">
+      <h2>What did they tell you?</h2>
+      <p style="margin:-4px 0 15px;color:var(--ink-2);font-size:14px">
+        Paste the message, or describe the offer in your own words. Names, fees, deadlines and
+        guarantees are all pulled out and checked separately.
+      </p>
+      <form id="form">
+        <label for="q">Their message or your description</label>
+        <textarea id="q" placeholder="e.g. Global Gateway Education guarantees my University of Manchester offer and waives the &pound;28,000 fee if I pay their processing fee today. Their site is globalgateway-edu.com"
+          required></textarea>
+        <div class="row" style="margin-top:13px">
+          <button class="primary" id="go" type="submit" disabled>Check this claim</button>
+          <button class="ghost" type="button" id="clear">Clear</button>
+        </div>
+        <p class="hint" id="hint">This checks facts against official registers. It never sends money or contacts anyone.</p>
+      </form>
+      <div class="chips">
+        <button class="chip" type="button" data-ex="A consultancy called Bright Path Education guarantees my University of Manchester offer, waives my GBP 28,000 fee and says the university has approved me. I must pay a processing fee today. Their site is bright-path-edu.com">Fraud sample</button>
+        <button class="chip" type="button" data-ex="Is the University of Manchester a real university, and what is their official website?">Simple check</button>
+        <button class="chip" type="button" data-ex="I have an offer letter from EduGlobal saying my tuition is 40,000 EUR for the MSc. Can you confirm this is the published international fee?">Fee claim</button>
+        <button class="chip" type="button" data-ex="Tell me about the University of Manchester Computer Science course">College profile</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2 : LOADING ============ -->
+  <section id="s-load" hidden aria-live="polite">
+    <div class="card">
+      <div class="load">
+        <div class="timer" id="timer">0.0s</div>
+        <p style="margin:2px 0 0;color:var(--ink-3);font-size:13.5px">
+          Eleven agents are working. Usually finishes in 30&ndash;60 seconds.
+        </p>
+        <div class="bar"><i></i></div>
+        <div class="agents" id="agents"></div>
+        <p class="hint">Open to new tabs? The full breakdown is saved as soon as it is ready.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3 : RESULT ============ -->
+  <section id="s-res" hidden aria-live="polite">
+    <div id="verdict"></div>
+    <div id="meta"></div>
+    <div id="body"></div>
+
+    <div class="card" id="decision">
+      <h2>Your call</h2>
+      <p style="margin:-4px 0 14px;color:var(--ink-2);font-size:14px">
+        You decide &mdash; the check only brings you the evidence. Nothing is sent anywhere.
+      </p>
+      <button class="ghost" type="button" data-dec="investigate_further">Investigate further</button>
+      <div id="scope" hidden style="margin-top:15px">
+        <h3>What should we dig into?</h3>
+        <div class="sc" id="scopebox">
+          <label><input type="checkbox" value="domain_history"> Website and domain history</label>
+          <label><input type="checkbox" value="company_registry"> Consultancy company register</label>
+          <label><input type="checkbox" value="fee_verification"> Published fee verification</label>
+          <label><input type="checkbox" value="advisories"> Government travel advisories</label>
+        </div>
+        <button class="primary" type="button" id="gofurther">Run the deeper check</button>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="ghost" type="button" data-dec="accept">I accept this &mdash; move on</button>
+        <button class="ghost" type="button" data-dec="dismiss">Dismiss, I have decided</button>
+      </div>
+      <div id="dout"></div>
+    </div>
+
+    <div class="card">
+      <h2>Raw report</h2>
+      <p style="margin:-4px 0 12px;color:var(--ink-2);font-size:14px">
+        The complete evidence envelope, exactly as the API returns it.
+      </p>
+      <div class="row tight">
+        <button class="ghost" type="button" id="copy">Copy JSON</button>
+        <button class="ghost" type="button" id="dl">Download</button>
+      </div>
+      <details style="margin-top:14px">
+        <summary>Show JSON</summary>
+        <div class="dbody"><pre class="mono" id="raw"
+          style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;padding:13px;max-height:440px;overflow:auto;margin:0"></pre></div>
+      </details>
+    </div>
+  </section>
+
+  <div class="card" id="err" hidden></div>
+
+  <section id="s-again" hidden style="text-align:center">
+    <button class="ghost" type="button" id="restart">Check another claim</button>
+  </section>
+</main>
+
+<footer>Varosha &middot; evidence, not accusations. A red flag is a reason to verify, not proof of fraud.</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var API = { investigate: "/webhook/investigate", decision: "/webhook/student-decision" };
+  var ENVELOPE = null, HEALTHY = false, TIMER = null, START = 0;
+
+  var AGENTS = ["Sanitiser", "Planner", "Evidence retrieval", "Extractor", "Register match",
+    "Domain cross-check", "Risk reasoner", "Citation gate", "Self-audit", "Action planner",
+    "Grounding gate"];
+
+  // Verdict -> how we colour it, and the plain-English meaning we show the student.
+  var VERDICTS = {
+    no_concern_found:          { c: "ok",   ic: "\u2713", t: "No concerns found",           m: "The claims we could check match independent sources. This is not a guarantee \u2014 verify the fee and visa conditions yourself before you pay." },
+    flags_raised:              { c: "warn", ic: "!",  t: "Some claims need checking",    m: "Parts of this could not be confirmed, and some do not match. Read the flags below before you rely on them." },
+    serious_contradictions:    { c: "bad",  ic: "!!", t: "Serious contradictions",      m: "Independent sources contradict what you were told. Do not pay anything yet \u2014 start with the checklist below." },
+    insufficient_evidence:     { c: "info", ic: "?",  t: "Not enough evidence",         m: "We could not confirm or refute this. That is a gap in the evidence, not a clean bill of health. Here is what to check yourself." }
+  };
+  var LEVELS = { High: "vb", Medium: "vc", Low: "vh" };
+
+  // ---------- tiny DOM helper (textContent only, so user text can never inject HTML)
+  function el(tag, props, kids) {
+    var n = document.createElement(tag);
+    if (props) for (var k in props) {
+      if (k === "class") n.className = props[k];
+      else if (k === "text") n.textContent = props[k];
+      else if (k.slice(0, 2) === "on") n.addEventListener(k.slice(2), props[k]);
+      else if (props[k] != null) n.setAttribute(k, props[k]);
+    }
+    (kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function show(id, on) { document.getElementById(id).hidden = !on; }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  function num(v) { return typeof v === "number" && isFinite(v) ? v.toLocaleString("en-GB") : null; }
+  function link(url, text) {
+    if (!url) return null;
+    return el("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: text || url });
+  }
+  function list(items) {
+    if (!items || !items.length) return null;
+    return el("ul", { class: "clean" }, items.map(function (i) { return el("li", { text: i }); }));
+  }
+
+  // ---------- health ----------
+  function paintHealth(ok, label) {
+    HEALTHY = ok;
+    document.getElementById("dot").className = "dot " + (ok ? "ok" : "no");
+    document.getElementById("hstat").textContent = label;
+    document.getElementById("go").disabled = !ok;
+    var h = document.getElementById("hint");
+    if (!ok) {
+      h.textContent = "The checking service is not reachable right now. Start it, then reload this page.";
+      h.style.color = "var(--bad-ink)";
+    } else {
+      h.textContent = "This checks facts against official registers. It never sends money or contacts anyone.";
+      h.style.color = "";
+    }
+  }
+  fetch("/health").then(function (r) { return r.json(); }).then(function (h) {
+    if (h.status === "ok") {
+      var n = (h.models || []).length;
+      paintHealth(true, n ? "Model ready" : "Model not loaded");
+    } else paintHealth(false, "Service degraded");
+  }).catch(function () { paintHealth(false, "Offline"); });
+
+  // ---------- loading ----------
+  function startLoading() {
+    var box = document.getElementById("agents");
+    clear(box);
+    AGENTS.forEach(function (a) {
+      box.appendChild(el("div", { class: "ag", "data-a": a }, [
+        el("span", { class: "tick" }), el("span", { text: a }), el("span", { class: "n" })
+      ]));
+    });
+    var t0 = Date.now();
+    clearInterval(TIMER);
+    TIMER = setInterval(function () {
+      document.getElementById("timer").textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s";
+    }, 100);
+    START = t0;
+    show("s-input", false); show("s-load", true); show("s-res", false);
+    show("s-again", false); show("err", false);
+    window.scrollTo(0, 0);
+  }
+  function stopLoading() {
+    clearInterval(TIMER); TIMER = null;
+    document.querySelectorAll("#agents .ag").forEach(function (n) { n.classList.remove("live"); });
+    show("s-load", false);
+  }
+  function fail(msg) {
+    stopLoading();
+    show("s-input", true); show("s-res", false); show("s-again", true);
+    var e = document.getElementById("err");
+    clear(e); e.className = "card err"; e.textContent = msg;
+    show("err", true);
+  }
+
+  // ---------- submit ----------
+  document.getElementById("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var text = document.getElementById("q").value.trim();
+    if (!text) return;
+    startLoading();
+    var go = document.getElementById("go");
+    fetch(API.investigate, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input_type: "text", text: text, source: "web" })
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.detail || ("Request failed (" + r.status + ")"));
+        return j;
+      });
+    }).then(render).catch(function (e) { fail("Could not complete the check: " + e.message); });
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    document.getElementById("q").value = ""; document.getElementById("q").focus();
+  });
+  document.getElementById("restart").addEventListener("click", function () {
+    ENVELOPE = null; document.getElementById("q").value = "";
+    show("s-input", true); show("s-res", false); show("s-again", false); show("err", false);
+    document.getElementById("q").focus(); window.scrollTo(0, 0);
+  });
+  document.querySelectorAll(".chip").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.getElementById("q").value = b.getAttribute("data-ex");
+      document.getElementById("q").focus();
+    });
+  });
+
+  // ---------- render ----------
+  function render(env) {
+    ENVELOPE = env;
+    var wall = Math.round((Date.now() - START) / 100) / 10;
+    stopLoading();
+    show("s-res", true); show("s-again", true);
+
+    // verdict banner
+    var V = VERDICTS[env.verdict] || VERDICTS.insufficient_evidence;
+    var box = document.getElementById("verdict");
+    clear(box);
+    box.appendChild(el("div", { class: "v " + V.c }, [
+      el("div", { class: "ic", text: V.ic }),
+      el("div", {}, [
+        el("h2", { text: V.t }),
+        el("p", { text: V.m })
+      ])
+    ]));
+
+    // summary card
+    var risk = env.risk || {}, ver = env.verification || {}, ex = env.extraction || {};
+    var who = [ex.institution, ex.consultancy].filter(function (s) { return s && s !== "null"; }).join("  \u00b7  ");
+    var meta = document.getElementById("meta");
+    clear(meta);
+    var dl = el("dl", { class: "kv" });
+    function kv(k, v) {
+      if (v == null || v === "" || (Array.isArray(v) && !v.length)) return;
+      dl.appendChild(el("dt", { text: k }));
+      dl.appendChild(el("dd", {}, [v.nodeType ? v : String(v)]));
+    }
+    kv("Checked", who || "\u2014");
+    var st = el("span", { class: "tag " + (LEVELS[risk.level] || "vi"), text: risk.level || "Unrated" });
+    kv("Risk", st);
+    var vt = el("span", { class: "tag " + (ver.match_status === "verified" ? "vh" : "vc"),
+      text: String(ver.match_status || "unknown").replace(/_/g, " ") });
+    kv("Register", vt);
+    if (ver.jurisdiction) kv("Jurisdiction", ver.jurisdiction);
+    if (ver.matched_name) kv("Matched", ver.matched_name);
+    kv("Case ID", el("span", { class: "mono", text: env.case_id || "\u2014" }));
+    kv("Completed in", wall + "s");
+    meta.appendChild(el("div", { class: "card" }, [dl]));
+
+    // main body
+    var b = document.getElementById("body");
+    clear(b);
+
+    if (risk.summary) {
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "What stands out" }),
+        el("p", { style: "margin:0;font-size:15px", text: risk.summary }),
+        (risk.reasons || []).length ? (function () {
+          var ul = el("ul", { class: "clean", style: "margin-top:13px" });
+          risk.reasons.forEach(function (r) {
+            var t = typeof r === "string" ? r : (r.why || r.flag || "");
+            if (!t) return;
+            var li = el("li", { text: t });
+            var bits = [];
+            if (r && r.flag) bits.push(r.flag.replace(/_/g, " "));
+            if (r && r.evidence_ref) bits.push("evidence " + r.evidence_ref);
+            if (r && r.confidence) bits.push(r.confidence + " confidence");
+            if (bits.length) li.appendChild(el("div", { class: "src", text: bits.join(" \u00b7 ") }));
+            if (r && r.source_url) { li.appendChild(el("div", { class: "src" }, [link(r.source_url, "Source") ])); }
+            ul.appendChild(li);
+          });
+          return ul;
+        })() : null
+      ]));
+    }
+
+    // domain cross-check: the highest-signal single check in the whole product
+    var dom = env.verification && env.verification.official_domain_check;
+    if (dom && dom.checked) {
+      var mm = dom.match === "match";
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "Website check" }),
+        el("div", { class: "v " + (mm ? "ok" : "bad"), style: "margin:0" }, [
+          el("div", { class: "ic", text: mm ? "\u2713" : "!" }),
+          el("div", {}, [
+            el("h2", { text: mm ? "The website is the official one" : "That is not the university's official website" }),
+            el("p", { text: "You were given " + (dom.submitted_domain || "\u2014") + ". The register lists " + (dom.official_domain || "\u2014") + "." }),
+            dom.official_url ? el("div", { class: "src" }, [link(dom.official_url, "Open the official site")]) : null
+          ])
+        ])
+      ]));
+    }
+
+    // claims
+    var claims = (ex.claims || []);
+    if (claims.length) {
+      var rows = [el("tr", {}, [
+        el("th", { text: "Claim" }), el("th", { text: "Type" }),
+        el("th", { text: "Status" }), el("th", { text: "Backed by" })
+      ])];
+      claims.forEach(function (c) {
+        var bad = /UNSUPPORTED|UNVERIFIABLE|CONTRADICT/i.test(c.status || "");
+        var mid = !bad && /CONTRADICT|UNCERTAIN|DISPUT/i.test(c.status || "");
+        rows.push(el("tr", {}, [
+          el("td", {}, [el("div", { text: c.text || "" }),
+            c.claim_id ? el("div", { class: "src mono", text: c.claim_id }) : null]),
+          el("td", { class: "mono", text: c.type || "\u2014" }),
+          el("td", {}, [el("span", { class: "tag " + (bad ? "vb" : mid ? "vc" : "vh"),
+            text: String(c.status || "unchecked").replace(/_/g, " ") })]),
+          el("td", { class: "mono", text: (c.evidence_ids || []).join(", ") || "\u2014" })
+        ]));
+      });
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "Every claim, checked separately" }),
+        el("table", { class: "tbl" }, [el("thead", {}, rows.slice(0, 1)), el("tbody", {}, rows.slice(1))])
+      ]));
+    }
+
+    // evidence
+    var ev = env.evidence || [];
+    if (ev.length) {
+      var wrap = el("div", {});
+      ev.forEach(function (e) {
+        var srcBits = [e.source_name || "", e.retrieved_at ? " \u00b7 retrieved " + e.retrieved_at : "",
+          e.tier ? " \u00b7 " + e.tier : ""].filter(Boolean).join("");
+        var body = el("div", { class: "dbody" }, [
+          el("div", { text: e.value || "" }),
+          srcBits ? el("div", { class: "src", text: srcBits }) : null
+        ]);
+        if (e.source_url) body.appendChild(el("div", { class: "src" }, [link(e.source_url, "Open source")]));
+        wrap.appendChild(el("details", {}, [
+          el("summary", {}, [
+            el("span", { class: "mono", text: e.id || "" }),
+            el("span", { text: e.label || "Evidence" }),
+            el("span", { class: "tag " + (e.tier === "static" ? "vh" : "vi"), text: e.tier || "live" })
+          ]), body
+        ]));
+      });
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "Where this comes from" }),
+        el("p", { style: "margin:-4px 0 6px;color:var(--ink-3);font-size:13px",
+          text: "Every line in the report above points at one of these. Nothing is asserted without a source." }),
+        wrap
+      ]));
+    }
+
+    // checklist
+    var cl = env.checklist || {};
+    var hasCl = (cl.questions_to_ask || []).length || (cl.documents_before_paying || []).length || cl.what_a_real_offer_looks_like;
+    if (hasCl) {
+      var c = el("div", { class: "card" }, [el("h2", { text: "What to do next" })]);
+      if (cl.registry_to_check && cl.registry_to_check.url) {
+        c.appendChild(el("h3", { text: "Check the register yourself" }));
+        c.appendChild(el("div", { class: "note" }, [
+          (cl.registry_to_check.name || "Official register"), el("br"),
+          link(cl.registry_to_check.url, cl.registry_to_check.url)
+        ]));
+      }
+      if ((cl.questions_to_ask || []).length) { c.appendChild(el("h3", { text: "Ask them" })); c.appendChild(list(cl.questions_to_ask)); }
+      if ((cl.documents_before_paying || []).length) { c.appendChild(el("h3", { text: "Before you pay, get these" })); c.appendChild(list(cl.documents_before_paying)); }
+      if (cl.what_a_real_offer_looks_like) {
+        c.appendChild(el("h3", { text: "What a real offer looks like" }));
+        c.appendChild(el("div", { class: "note", text: cl.what_a_real_offer_looks_like }));
+      }
+      b.appendChild(c);
+    }
+
+    // self-audit
+    var au = env.audit || {};
+    if (au && au.passed === false) {
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "Our own check on this report" }),
+        el("div", { class: "v warn", style: "margin:0" }, [
+          el("div", { class: "ic", text: "!" }),
+          el("div", {}, [
+            el("h2", { text: "The report did not pass its own audit" }),
+            el("p", { text: "After " + (au.attempts || 1) + " attempt(s) some claims were still left without a source. " +
+              "Treat those specific claims as unproven \u2014 they are the ones to chase yourself." }),
+            (au.gaps || []).length ? list(au.gaps) : null
+          ])
+        ])
+      ]));
+    }
+
+    // trace
+    var tr = env.trace || [];
+    if (tr.length) {
+      var total = tr.reduce(function (s, t) { return s + (t.ms || 0); }, 0) / 1000;
+      var trows = [el("tr", {}, [el("th", { text: "Agent" }), el("th", { text: "Did" }), el("th", { text: "Time" })])];
+      tr.forEach(function (t) {
+        trows.push(el("tr", {}, [
+          el("td", { text: t.agent || "" }),
+          el("td", { class: "src", style: "color:var(--ink-2)", text: t.did || "" }),
+          el("td", { class: "mono", text: t.ms == null ? "\u2014" : (t.ms >= 1000 ? (t.ms / 1000).toFixed(1) + "s" : t.ms + "ms") })
+        ]));
+      });
+      b.appendChild(el("div", { class: "card" }, [
+        el("h2", { text: "How this was checked" }),
+        el("p", { style: "margin:-4px 0 10px;color:var(--ink-3);font-size:13px",
+          text: tr.length + " agents, " + total.toFixed(1) + "s of model time. The judgement calls are made by these agents; the facts are decided by the gates between them." }),
+        el("table", { class: "tbl" }, [el("thead", {}, trows.slice(0, 1)), el("tbody", {}, trows.slice(1))])
+      ]));
+    }
+
+    if (env.disclaimer) {
+      b.appendChild(el("div", { class: "note", text: env.disclaimer }));
+    }
+
+    document.getElementById("raw").textContent = JSON.stringify(env, null, 2);
+    show("s-load", false);
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- decision ----------
+  document.querySelectorAll("[data-dec]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var d = btn.getAttribute("data-dec");
+      document.getElementById("scope").hidden = d !== "investigate_further";
+      if (d === "investigate_further") document.getElementById("gofurther").click();
+    });
+  });
+  function post(decision, scope) {
+    if (!ENVELOPE || !ENVELOPE.case_id) return;
+    var out = document.getElementById("dout");
+    clear(out);
+    var busy = el("div", { class: "note" }, [el("span", { class: "spin" }), " Saving your decision\u2026"]);
+    out.appendChild(busy);
+    fetch(API.decision, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ case_id: ENVELOPE.case_id, decision: decision, scope: scope || [] })
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.detail || ("Failed (" + r.status + ")"));
+        return j;
+      });
+    }).then(function (j) {
+      ENVELOPE = j;
+      clear(out);
+      out.appendChild(el("div", { class: "v ok", style: "margin:0" }, [
+        el("div", { class: "ic", text: "\u2713" }),
+        el("div", {}, [
+          el("h2", { text: decision === "accept" ? "Noted \u2014 you have accepted this"
+                  : decision === "dismiss" ? "Noted \u2014 you have dismissed this"
+                  : "Deeper check finished" }),
+          el("p", { text: (j.risk && j.risk.summary) || "Your decision is recorded. Nothing was sent anywhere." })
+        ])
+      ]));
+      var ff = j.followup_findings;
+      if (ff && ff.length) {
+        var ul = el("ul", { class: "clean", style: "margin-top:11px" });
+        ff.forEach(function (f) {
+          var t = typeof f === "string" ? f : (f.summary || f.what || JSON.stringify(f));
+          var li = el("li", { text: t });
+          if (typeof f === "object" && f.source_url) li.appendChild(el("div", { class: "src" }, [link(f.source_url, "Source")]));
+          ul.appendChild(li);
+        });
+        out.appendChild(el("h3", { text: "What the deeper check found", style: "margin-top:16px" }));
+        out.appendChild(ul);
+      }
+      document.getElementById("raw").textContent = JSON.stringify(j, null, 2);
+    }).catch(function (e) {
+      clear(out);
+      out.appendChild(el("div", { class: "err", text: "Could not save your decision: " + e.message }));
+    });
+  }
+  document.getElementById("gofurther").addEventListener("click", function () {
+    var picked = [].slice.call(document.querySelectorAll("#scopebox input:checked")).map(function (i) { return i.value; });
+    if (!picked.length) {
+      document.getElementById("dout").textContent = "";
+      document.getElementById("dout").appendChild(el("div", { class: "err", text: "Pick at least one thing to dig into first." }));
+      return;
+    }
+    post("investigate_further", picked);
+  });
+
+  // ---------- raw report tools ----------
+  document.getElementById("copy").addEventListener("click", function () {
+    var t = JSON.stringify(ENVELOPE, null, 2), btn = this;
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy JSON"; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, done);
+    else done();
+  });
+  document.getElementById("dl").addEventListener("click", function () {
+    var url = URL.createObjectURL(new Blob([JSON.stringify(ENVELOPE, null, 2)], { type: "application/json" }));
+    var a = el("a", { href: url, download: (ENVELOPE.case_id || "edushield-report") + ".json" });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+})();
+</script>
+</body>
+</html>
